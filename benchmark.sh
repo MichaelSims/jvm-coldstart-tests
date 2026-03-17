@@ -4,6 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+RUNS=10
 
 echo "=== JVM Cold Start Benchmark ==="
 echo ""
@@ -21,11 +22,12 @@ echo ""
 HELLO_JAR="$SCRIPT_DIR/hello-world/build/libs/hello-world.jar"
 CLIKT_JAR="$SCRIPT_DIR/clikt-hello/build/libs/clikt-hello.jar"
 SERVER_JAR="$SCRIPT_DIR/bare-server/build/libs/bare-server.jar"
+TTR="$SCRIPT_DIR/time-to-ready.sh"
 
-# Benchmark with hyperfine
+# CLI startup benchmarks
 echo "--- CLI startup time benchmarks (hyperfine) ---"
 echo ""
-hyperfine --warmup 3 --runs 15 \
+hyperfine --warmup 3 --runs "$RUNS" \
   -n "Bare Kotlin Hello World" "java -jar $HELLO_JAR" \
   -n "Clikt Hello World" "java -jar $CLIKT_JAR"
 
@@ -42,19 +44,19 @@ done
 
 echo ""
 
-# Server time-to-first-response
-echo "--- Server time-to-first-response ---"
+# Server time-to-first-response benchmarks
+echo "--- Server time-to-first-response ($RUNS runs) ---"
 echo ""
 echo "Bare JDK HttpServer:"
-for i in 1 2 3; do
+for i in $(seq 1 "$RUNS"); do
   kill $(lsof -ti:8080) 2>/dev/null || true
-  sleep 0.5
-  "$SCRIPT_DIR/time-to-ready.sh" -jar "$SERVER_JAR"
+  sleep 0.3
+  "$TTR" "$SERVER_JAR"
 done
 
 echo ""
-echo "To benchmark a ktor (or other) server, run:"
-echo "  $SCRIPT_DIR/time-to-ready.sh -jar /path/to/server-all.jar"
+echo "To compare against another server, run:"
+echo "  $SCRIPT_DIR/benchmark-server.sh /path/to/server-all.jar"
 echo ""
 echo "--- To add your own CLI tool ---"
 echo "  hyperfine --warmup 3 --runs 15 'your-tool --help'"

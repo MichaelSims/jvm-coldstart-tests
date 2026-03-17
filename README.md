@@ -36,15 +36,17 @@ cd ../clikt-hello && ./gradlew jar
 hyperfine 'java -jar build/libs/clikt-hello.jar'
 ```
 
-To measure a server's time to first HTTP response:
+To measure a server's time to first HTTP response (single run):
 
 ```bash
-# Included bare-server
 cd bare-server && ./gradlew jar
-./time-to-ready.sh -jar bare-server/build/libs/bare-server.jar
+./time-to-ready.sh bare-server/build/libs/bare-server.jar
+```
 
-# Any other server fat jar (e.g., ktor, Spring Boot)
-./time-to-ready.sh -jar /path/to/server-all.jar
+To compare the bare JDK server against another server jar (e.g., ktor, Spring Boot):
+
+```bash
+./benchmark-server.sh /path/to/server-all.jar
 ```
 
 To count classes loaded during startup:

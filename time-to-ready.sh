@@ -1,37 +1,22 @@
 #!/usr/bin/env bash
 # Measures time from process start to first successful HTTP response.
 #
-# Dependencies: java, curl
-#
 # Usage:
-#   ./time-to-ready.sh -jar /path/to/app.jar [port]
-#   ./time-to-ready.sh -cp /path/to/classes ClassName [port]
+#   ./time-to-ready.sh /path/to/server-all.jar [port]
 set -euo pipefail
 
-JAVA="${JAVA_CMD:-java}"
-
-if [[ "${1:-}" == "-jar" ]]; then
-    shift
-    TARGET="$1"; shift
-    JAVA_ARGS=(-jar "$TARGET")
-elif [[ "${1:-}" == "-cp" ]]; then
-    shift
-    CLASSPATH="$1"; shift
-    CLASSNAME="$1"; shift
-    JAVA_ARGS=(-cp "$CLASSPATH" "$CLASSNAME")
-else
-    echo "Usage:"
-    echo "  $0 -jar /path/to/app.jar [port]"
-    echo "  $0 -cp /path/to/classes ClassName [port]"
+if [[ $# -eq 0 ]]; then
+    echo "Usage: $0 /path/to/server-all.jar [port]"
     exit 1
 fi
 
-PORT="${1:-8080}"
+JAR="$1"
+PORT="${2:-8080}"
 URL="http://127.0.0.1:${PORT}/"
 
 START=$(date +%s%N)
 
-"$JAVA" "${JAVA_ARGS[@]}" &
+java -jar "$JAR" > /dev/null 2>&1 &
 SERVER_PID=$!
 
 cleanup() { kill $SERVER_PID 2>/dev/null; wait $SERVER_PID 2>/dev/null || true; }
